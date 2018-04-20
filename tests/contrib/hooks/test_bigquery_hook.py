@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 #
 
 import unittest
@@ -239,6 +244,21 @@ class TestBigQueryBaseCursor(unittest.TestCase):
         bq_hook.cancel_query()
 
         mock_jobs.cancel.assert_called_with(projectId=project_id, jobId=running_job_id)
+
+    @mock.patch.object(hook.BigQueryBaseCursor, 'run_with_configuration')
+    def test_run_query_sql_dialect_default(self, run_with_config):
+        cursor = hook.BigQueryBaseCursor(mock.Mock(), "project_id")
+        cursor.run_query('query')
+        args, kwargs = run_with_config.call_args
+        self.assertIs(args[0]['query']['useLegacySql'], True)
+
+    @mock.patch.object(hook.BigQueryBaseCursor, 'run_with_configuration')
+    def test_run_query_sql_dialect_override(self, run_with_config):
+        for bool_val in [True, False]:
+            cursor = hook.BigQueryBaseCursor(mock.Mock(), "project_id")
+            cursor.run_query('query', use_legacy_sql=bool_val)
+            args, kwargs = run_with_config.call_args
+            self.assertIs(args[0]['query']['useLegacySql'], bool_val)
 
 
 class TestTimePartitioningInRunJob(unittest.TestCase):

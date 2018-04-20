@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 #
 """
 This module contains a BigQuery Hook, as well as a very basic PEP 249
@@ -351,7 +356,7 @@ class BigQueryBaseCursor(LoggingMixin):
         source_format = source_format.upper()
         allowed_formats = [
             "CSV", "NEWLINE_DELIMITED_JSON", "AVRO", "GOOGLE_SHEETS",
-            "DATASTORE_BACKUP"
+            "DATASTORE_BACKUP", "PARQUET"
         ]
         if source_format not in allowed_formats:
             raise ValueError("{0} is not a valid source format. "
@@ -455,6 +460,7 @@ class BigQueryBaseCursor(LoggingMixin):
                   allow_large_results=False,
                   flatten_results=False,
                   udf_config=False,
+                  use_legacy_sql=None,
                   maximum_billing_tier=None,
                   maximum_bytes_billed=None,
                   create_disposition='CREATE_IF_NEEDED',
@@ -485,6 +491,9 @@ class BigQueryBaseCursor(LoggingMixin):
         :type flatten_results: boolean
         :param udf_config: The User Defined Function configuration for the query.
             See https://cloud.google.com/bigquery/user-defined-functions for details.
+        :param use_legacy_sql: Whether to use legacy SQL (true) or standard SQL (false).
+            If `None`, defaults to `self.use_legacy_sql`.
+        :type use_legacy_sql: boolean
         :type udf_config: list
         :param maximum_billing_tier: Positive integer that serves as a
             multiplier of the basic price.
@@ -523,10 +532,13 @@ class BigQueryBaseCursor(LoggingMixin):
                 "Please only use one or more of the following options: {1}"
                 .format(schema_update_options, allowed_schema_update_options))
 
+        if use_legacy_sql is None:
+            use_legacy_sql = self.use_legacy_sql
+
         configuration = {
             'query': {
                 'query': bql,
-                'useLegacySql': self.use_legacy_sql,
+                'useLegacySql': use_legacy_sql,
                 'maximumBillingTier': maximum_billing_tier,
                 'maximumBytesBilled': maximum_bytes_billed,
                 'priority': priority
@@ -800,7 +812,7 @@ class BigQueryBaseCursor(LoggingMixin):
         source_format = source_format.upper()
         allowed_formats = [
             "CSV", "NEWLINE_DELIMITED_JSON", "AVRO", "GOOGLE_SHEETS",
-            "DATASTORE_BACKUP"
+            "DATASTORE_BACKUP", "PARQUET"
         ]
         if source_format not in allowed_formats:
             raise ValueError("{0} is not a valid source format. "
@@ -896,6 +908,7 @@ class BigQueryBaseCursor(LoggingMixin):
             ],
             'DATASTORE_BACKUP': ['projectionFields'],
             'NEWLINE_DELIMITED_JSON': ['autodetect', 'ignoreUnknownValues'],
+            'PARQUET': ['autodetect', 'ignoreUnknownValues'],
             'AVRO': [],
         }
         valid_configs = src_fmt_to_configs_mapping[source_format]

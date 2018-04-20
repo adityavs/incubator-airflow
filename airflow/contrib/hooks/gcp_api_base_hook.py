@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 #
 import json
 
@@ -65,10 +70,6 @@ class GoogleCloudBaseHook(BaseHook, LoggingMixin):
         keyfile_dict = self._get_field('keyfile_dict', False)
         scope = self._get_field('scope', False)
 
-        kwargs = {}
-        if self.delegate_to:
-            kwargs['sub'] = self.delegate_to
-
         if not key_path and not keyfile_dict:
             self.log.info('Getting connection using `gcloud auth` user, '
                           'since no key file is defined for hook.')
@@ -106,7 +107,9 @@ class GoogleCloudBaseHook(BaseHook, LoggingMixin):
                     .from_json_keyfile_dict(keyfile_dict, scopes)
             except json.decoder.JSONDecodeError:
                 raise AirflowException('Invalid key JSON.')
-        return credentials
+
+        return credentials.create_delegated(self.delegate_to) \
+            if self.delegate_to else credentials
 
     def _get_access_token(self):
         """
